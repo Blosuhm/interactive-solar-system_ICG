@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createSpectatorControls } from "./controls";
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -27,5 +28,18 @@ const sphereMaterial = new THREE.MeshBasicMaterial({
 const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 scene.add(sphere);
 
+const axesHelper = new THREE.AxesHelper(100);
+scene.add(axesHelper);
+
 // Render
 renderer.render(scene, camera);
+
+// Controls
+const controls = createSpectatorControls(camera, renderer.domElement);
+
+renderer.setAnimationLoop(animate);
+function animate() {
+  controls.update();
+
+  renderer.render(scene, camera);
+}
