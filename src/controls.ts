@@ -29,8 +29,7 @@ function createSpectatorControls(
     mouseDown: false,
   };
 
-  let speed = 0.1;
-  let lookSpeed = 2;
+  let speed = 0.5;
 
   function onKey(event: KeyboardEvent, value: boolean) {
     if (event.altKey) return;
@@ -91,14 +90,22 @@ function createSpectatorControls(
     domElement.removeEventListener("mousemove", onMouseMove);
   }
 
+  function onWheel(event: WheelEvent) {
+    // TODO: Tweak speed values
+    speed -= event.deltaY / 10000;
+    speed = clamp(speed, 0, 1);
+  }
+
   function connect() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("wheel", onWheel);
 
     domElement.addEventListener("mousedown", onMouseDown);
     domElement.addEventListener("mouseup", onMouseUp);
   }
 
+  const q = new THREE.Quaternion();
   function update() {
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);
@@ -128,15 +135,19 @@ function createSpectatorControls(
     }
 
     if (moveState.mouseDown) {
-      camera.rotateOnWorldAxis(
-        UP,
-        lookSpeed * (currentMousePosition.x - initialMousePosition.x),
+      const angleToUp = direction.angleTo(UP);
+      const movementY = clamp(
+        currentMousePosition.y - initialMousePosition.y,
+        -(Math.PI - angleToUp - 0.1),
+        angleToUp - 0.1,
       );
+      q.setFromAxisAngle(perpendicular, movementY);
+      camera.applyQuaternion(q);
 
-      camera.rotateOnWorldAxis(
-        perpendicular,
-        lookSpeed * (currentMousePosition.y - initialMousePosition.y),
-      );
+      const movementX = currentMousePosition.x - initialMousePosition.x;
+      q.setFromAxisAngle(UP, movementX);
+      camera.applyQuaternion(q);
+
       initialMousePosition.copy(currentMousePosition);
     }
   }
@@ -145,6 +156,10 @@ function createSpectatorControls(
   }
 
   return { connect, update };
+}
+
+function clamp(val: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, val));
 }
 
 export { createSpectatorControls };
