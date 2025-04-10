@@ -1,45 +1,81 @@
 import * as THREE from "three";
-import { createSpectatorControls } from "./controls";
+import { Animate, initEmptyScene } from "./init";
+import { solarSystem } from "./solar-system";
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setClearColor(new THREE.Color(0x000000));
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const { scene, renderer, camera, controls, animate } = initEmptyScene();
 
-// Camera
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-);
-camera.position.set(0, 0, 5);
-camera.lookAt(0, 0, 0);
+export { animate };
 
-// Scene
-const scene = new THREE.Scene();
-
-const sphereGeometry = new THREE.SphereGeometry(1);
-const sphereMaterial = new THREE.MeshBasicMaterial({
+const ringGeometry = new THREE.RingGeometry(16, 20, 64);
+const ringMaterial = new THREE.MeshBasicMaterial({
   color: 0xff0000,
-  wireframe: true,
+  side: THREE.DoubleSide,
 });
 
-const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-scene.add(sphere);
+const clock = new THREE.Clock();
 
-const axesHelper = new THREE.AxesHelper(100);
-scene.add(axesHelper);
+solarSystem.forEach((body) => {
+  const sphereMaterial = new THREE.MeshLambertMaterial({
+    color: body.color,
+    emissive: body.lightSource ? 0xffffff : undefined,
+    // shininess: body.lightSource ? 10000 : undefined,
+    // wireframe: true,
+  });
+  const sphereGeometry = new THREE.SphereGeometry(body.radius);
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  sphere.castShadow = true;
+  sphere.receiveShadow = true;
 
-// Render
-renderer.render(scene, camera);
+  body.object3d = sphere;
+  const ring = new THREE.Mesh(ringGeometry, ringMaterial);
 
-// Controls
-const controls = createSpectatorControls(camera, renderer.domElement);
+  const orbit = new THREE.Object3D();
 
-renderer.setAnimationLoop(animate);
-function animate() {
-  controls.update();
+  if (body.hasParent) {
+    sphere.position.set(0, 0, body.distanceToParent / 80);
+    ring.position.set(0, 0, body.distanceToParent / 80);
+    orbit.add(sphere);
+    body.orbit = orbit;
 
-  renderer.render(scene, camera);
+    const orbitAnimate: Animate = {
+      animate: [],
+      animationLoop: null,
+    };
+    orbitAnimate.animationLoop = () => {
+      const angle = (2 * Math.PI) / (body.period / 10);
+      orbit.rotation.y = angle * clock.getElapsedTime();
+    };
+    animate.animate.push(orbitAnimate);
+  }
+  if (body.lightSource) {
+    const l = new THREE.PointLight(0xffffff, 1000000, 0, 0.5);
+    scene.add(l);
+  }
+
+  // ring.lookAt(cameraHUD.position);
+  // sceneHUD.add(ring);
+  scene.add(body.hasParent ? orbit : sphere);
+});
+
+const sidebar = document.getElementById("sidebar");
+if (sidebar === null) {
+  throw new Error("Please create an element with id sidebar");
 }
+
+for (let body of solarSystem) {
+  if (body.object3d === undefined) continue;
+  const button = document.createElement("button");
+  button.innerHTML = body.name;
+  button.className = "button";
+
+  button.onclick = () => {
+    camera.parent?.remove(camera);
+    if (body.hasParent) {
+      body.orbit?.add(camera);
+    }
+    controls.orbit(body.object3d as THREE.Object3D, 4 * body.radius);
+  };
+  sidebar.appendChild(button);
+}
+
+renderer.render(scene, camera);

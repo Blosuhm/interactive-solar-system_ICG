@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {
+  OrbitControls,
+  PointerLockControls,
+} from "three/examples/jsm/Addons.js";
 const UP = new THREE.Vector3(0, 1, 0);
 
 type MoveState = {
@@ -28,8 +32,27 @@ function createSpectatorControls(
 
     mouseDown: false,
   };
+  const fakeCamera = camera.clone();
+  const orbitControls = new OrbitControls(fakeCamera, domElement);
+  let shouldOrbit = true;
 
-  let speed = 0.5;
+  function orbit(targetObject: THREE.Object3D, distance = 0) {
+    shouldOrbit = true;
+
+    orbitControls.target = targetObject.position;
+
+    fakeCamera.position.copy(
+      targetObject.position.clone().add(new THREE.Vector3(0, 0, distance)),
+    );
+  }
+
+  const pointerLockControls = new PointerLockControls(camera, domElement);
+  domElement.addEventListener("click", () => {
+    if (shouldOrbit) return;
+    // pointerLockControls.lock();
+  });
+
+  let speed = 10;
 
   function onKey(event: KeyboardEvent, value: boolean) {
     if (event.altKey) return;
@@ -92,8 +115,8 @@ function createSpectatorControls(
 
   function onWheel(event: WheelEvent) {
     // TODO: Tweak speed values
-    speed -= event.deltaY / 10000;
-    speed = clamp(speed, 0, 1);
+    speed -= event.deltaY / 1000;
+    speed = clamp(speed, 0, 100000);
   }
 
   function connect() {
@@ -105,8 +128,15 @@ function createSpectatorControls(
     domElement.addEventListener("mouseup", onMouseUp);
   }
 
-  const q = new THREE.Quaternion();
+  // const q = new THREE.Quaternion();
   function update() {
+    if (shouldOrbit) {
+      orbitControls.update();
+      camera.copy(fakeCamera);
+      return;
+    }
+
+    pointerLockControls.update(1);
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);
 
@@ -134,28 +164,28 @@ function createSpectatorControls(
       camera.position.sub(UP.clone().multiplyScalar(speed));
     }
 
-    if (moveState.mouseDown) {
-      const angleToUp = direction.angleTo(UP);
-      const movementY = clamp(
-        currentMousePosition.y - initialMousePosition.y,
-        -(Math.PI - angleToUp - 0.1),
-        angleToUp - 0.1,
-      );
-      q.setFromAxisAngle(perpendicular, movementY);
-      camera.applyQuaternion(q);
-
-      const movementX = currentMousePosition.x - initialMousePosition.x;
-      q.setFromAxisAngle(UP, movementX);
-      camera.applyQuaternion(q);
-
-      initialMousePosition.copy(currentMousePosition);
-    }
+    // if (moveState.mouseDown) {
+    //   const angleToUp = direction.angleTo(UP);
+    //   const movementY = clamp(
+    //     currentMousePosition.y - initialMousePosition.y,
+    //     -(Math.PI - angleToUp - 0.1),
+    //     angleToUp - 0.1,
+    //   );
+    //   q.setFromAxisAngle(perpendicular, movementY);
+    //   camera.applyQuaternion(q);
+    //
+    //   const movementX = currentMousePosition.x - initialMousePosition.x;
+    //   q.setFromAxisAngle(UP, movementX);
+    //   camera.applyQuaternion(q);
+    //
+    //   initialMousePosition.copy(currentMousePosition);
+    // }
   }
   if (domElement !== null) {
     connect();
   }
 
-  return { connect, update };
+  return { connect, update, orbit };
 }
 
 function clamp(val: number, min: number, max: number) {
