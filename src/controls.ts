@@ -42,7 +42,7 @@ function createSpectatorControls(
     orbitControls.target = targetObject.position;
 
     fakeCamera.position.copy(
-      targetObject.position.clone().add(new THREE.Vector3(0, 0, distance)),
+      targetObject.position.clone().add(new THREE.Vector3(distance, 0, 0)),
     );
   }
 
