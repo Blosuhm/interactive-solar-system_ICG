@@ -39,6 +39,21 @@ export function initEmptyScene() {
 
   const scene = new THREE.Scene();
 
+  const skyboxGeo = new THREE.BoxGeometry(200000, 200000, 200000);
+
+  const skyboxTexture = new THREE.TextureLoader().load(
+    "/interactive-solar-system_ICG/skybox.png",
+  );
+
+  const skyboxMaterial = new THREE.MeshBasicMaterial({
+    map: skyboxTexture,
+    side: THREE.BackSide,
+  });
+
+  const skybox = new THREE.Mesh(skyboxGeo, skyboxMaterial);
+
+  scene.add(skybox);
+
   // Controls
   const controls = createSpectatorControls(camera, renderer.domElement);
 
