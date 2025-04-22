@@ -17,6 +17,7 @@
             nodejs
             prettierd
             nodePackages.typescript-language-server
+            tailwindcss-language-server
           ];
         };
       }

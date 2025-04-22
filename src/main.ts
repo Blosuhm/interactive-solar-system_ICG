@@ -66,7 +66,8 @@ for (let body of solarSystem) {
   if (body.object3d === undefined) continue;
   const button = document.createElement("button");
   button.innerHTML = body.name;
-  button.className = "button";
+  button.className =
+    "w-full bg-black/80 border-white border-2 rounded-md hover:bg-black/60 font-semibold text-lg hover:border-green-500";
 
   button.onclick = () => {
     camera.parent?.remove(camera);

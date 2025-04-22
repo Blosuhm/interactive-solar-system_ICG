@@ -2,33 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/src/styles.css" rel="stylesheet" />
     <title>Interactive Solar System</title>
-    <style>
-      body {
-        margin: 0;
-      }
-
-      #sidebar {
-        position: absolute;
-        top: 2rem;
-        /* bottom: 2rem; */
-        right: 2rem;
-        width: 8rem;
-        display: grid;
-        gap: 1rem;
-        border-width: 1px;
-        border-color: black;
-      }
-
-      .button {
-        width: 100%;
-      }
-    </style>
   </head>
-  <body>
-    <aside id="sidebar"></aside>
+  <body class="text-white">
+    <aside id="sidebar" class="absolute top-8 right-8 grid w-32 gap-4"></aside>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

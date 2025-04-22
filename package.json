@@ -10,10 +10,15 @@
   },
   "devDependencies": {
     "@types/three": "^0.173.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "typescript": "~5.7.2",
     "vite": "^6.1.0"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "tailwindcss": "^4.1.4",
     "three": "^0.173.0"
   }
 }
