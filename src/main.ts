@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import CelestialBody from "./celestial-body";
 import { Animate, initEmptyScene } from "./init";
 import { solarSystem } from "./solar-system";
 
@@ -14,7 +15,18 @@ const ringMaterial = new THREE.MeshBasicMaterial({
 
 const clock = new THREE.Clock();
 
+scene.add(solarSystem[0].orbit);
+
+solarSystem.forEach((celestialBody) => {
+  const animation: Animate = {
+    animationLoop: celestialBody.animate,
+    animate: [],
+  };
+  animate.animate.push(animation);
+});
+
 solarSystem.forEach((body) => {
+  return;
   const sphereMaterial = new THREE.MeshLambertMaterial({
     color: body.color,
     emissive: body.lightSource ? 0xffffff : undefined,
@@ -62,19 +74,85 @@ if (sidebar === null) {
   throw new Error("Please create an element with id sidebar");
 }
 
+const selected = document.getElementById("selected-body");
+if (selected === null) {
+  throw new Error("Please create an element with id selected-body");
+}
+
+const updateSelectedBody = (selectedBody: CelestialBody) => {
+  selected.innerHTML = `
+    <p class="font-bold text-lg">Distance to parent</p>
+    <input type="range" min="0" max="1000" value="${selectedBody.distance}" class="" id="range">
+  `;
+  const input = document.getElementById("range") as HTMLInputElement;
+  input.oninput = (ev) => {
+    const prevDistance = selectedBody.distance;
+    selectedBody.distance = parseInt((ev.target as HTMLInputElement).value);
+    controls.updateDistance(selectedBody.distance - prevDistance);
+  };
+};
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let isDragging = false;
+let mouseDownPosition = { x: 0, y: 0 };
+const dragThreshold = 5; // pixels
+
+window.addEventListener("mousedown", (event) => {
+  isDragging = false;
+  mouseDownPosition.x = event.clientX;
+  mouseDownPosition.y = event.clientY;
+});
+
+window.addEventListener("mousemove", (event) => {
+  const dx = event.clientX - mouseDownPosition.x;
+  const dy = event.clientY - mouseDownPosition.y;
+  if (Math.sqrt(dx * dx + dy * dy) > dragThreshold) {
+    isDragging = true;
+  }
+});
+
+window.addEventListener("mouseup", (event) => {
+  if (isDragging) return;
+
+  // Convert mouse position to normalized device coordinates (-1 to +1)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Update the picking ray with the camera and mouse position
+  raycaster.setFromCamera(mouse, camera);
+
+  // Calculate objects intersecting the picking ray
+  const intersects = raycaster.intersectObjects(scene.children, true);
+  if (intersects.length < 1) return;
+
+  const selectedObject = intersects[0].object;
+
+  if (selectedObject.userData.celestialBody === undefined) return;
+
+  const body = selectedObject.userData.celestialBody as CelestialBody;
+
+  updateSelectedBody(body);
+  camera.parent?.remove(camera);
+  if (body.parent !== null) {
+    body.orbit?.add(camera);
+  }
+  controls.orbit(body.object, 4 * body.radius);
+});
+
 for (let body of solarSystem) {
-  if (body.object3d === undefined) continue;
   const button = document.createElement("button");
   button.innerHTML = body.name;
   button.className =
     "w-full bg-black/80 border-white border-2 rounded-md hover:bg-black/60 font-semibold text-lg hover:border-green-500";
 
   button.onclick = () => {
+    updateSelectedBody(body);
     camera.parent?.remove(camera);
-    if (body.hasParent) {
+    if (body.parent !== null) {
       body.orbit?.add(camera);
     }
-    controls.orbit(body.object3d as THREE.Object3D, 4 * body.radius);
+    controls.orbit(body.object, 4 * body.radius);
   };
   sidebar.appendChild(button);
 }

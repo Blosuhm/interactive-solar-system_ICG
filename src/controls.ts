@@ -46,6 +46,10 @@ function createSpectatorControls(
     );
   }
 
+  function updateDistance(deltaDistance: number) {
+    fakeCamera.position.add(new THREE.Vector3(0, 0, deltaDistance));
+  }
+
   const pointerLockControls = new PointerLockControls(camera, domElement);
   domElement.addEventListener("click", () => {
     if (shouldOrbit) return;
@@ -185,7 +189,7 @@ function createSpectatorControls(
     connect();
   }
 
-  return { connect, update, orbit };
+  return { connect, update, orbit, updateDistance };
 }
 
 function clamp(val: number, min: number, max: number) {

@@ -2,113 +2,80 @@
 // mercury, that is, the radius of mercury is considered to be one unit of
 // distance.
 
-import * as THREE from "three";
+import CelestialBody from "./celestial-body";
 
-type CelestialBody = {
-  radius: number;
-  texture?: undefined;
-  color: number;
-  lightSource?: boolean;
-  name: string;
-  object3d?: THREE.Object3D;
-} & (
-  | {
-      hasParent: true;
-      parent: CelestialBody;
-      distanceToParent: number;
-      period: number;
-      orbit?: THREE.Object3D;
-    }
-  | { hasParent: false }
-);
-
-const sun: CelestialBody = {
-  hasParent: false,
-  radius: 285.08,
-  color: 0xffffff,
-  lightSource: true,
+const sun = new CelestialBody({
   name: "Sun",
-};
+  distance: 0,
+  radius: 285.08,
+  lightSource: true,
+  orbitalPeriod: 0,
+});
 
-const mercury: CelestialBody = {
-  hasParent: true,
-  radius: 1,
-  parent: sun,
-  distanceToParent: 23773.41,
-  color: 0xaaaaaa,
-  period: 88,
+const mercury = new CelestialBody({
   name: "Mercury",
-};
-
-const venus: CelestialBody = {
-  hasParent: true,
-  radius: 2.48,
-  parent: sun,
-  distanceToParent: 44267.74,
-  color: 0xffff00,
-  period: 225,
-  name: "Venus",
-};
-
-const earth: CelestialBody = {
-  hasParent: true,
-  radius: 2.61,
-  parent: sun,
-  distanceToParent: 62302.74,
-  color: 0x00ff00,
-  period: 365,
-  name: "Earth",
-};
-
-const mars: CelestialBody = {
-  hasParent: true,
-  radius: 1.39,
-  parent: sun,
-  distanceToParent: 93454.11,
   color: 0xff0000,
-  period: 687,
+  distance: 23773.41,
+  radius: 1,
+  orbitalPeriod: 88,
+  parent: sun,
+});
+
+const venus = new CelestialBody({
+  name: "Venus",
+  distance: 44267.74,
+  radius: 2.48,
+  orbitalPeriod: 225,
+  parent: sun,
+});
+
+const earth = new CelestialBody({
+  name: "Earth",
+  distance: 62302.74,
+  radius: 2.61,
+  orbitalPeriod: 365,
+  parent: sun,
+});
+
+const mars = new CelestialBody({
   name: "Mars",
-};
-
-const jupiter: CelestialBody = {
-  hasParent: true,
-  radius: 28.66,
+  distance: 93454.11,
+  radius: 1.39,
+  orbitalPeriod: 687,
   parent: sun,
-  distanceToParent: 319301.55,
-  color: 0xcd853f,
-  period: 4331,
+});
+
+const jupiter = new CelestialBody({
   name: "Jupiter",
-};
-
-const saturn: CelestialBody = {
-  hasParent: true,
-  radius: 23.87,
+  distance: 319301.55,
+  radius: 28.66,
+  orbitalPeriod: 4331,
   parent: sun,
-  distanceToParent: 586137.64,
-  color: 0xffdead,
-  period: 10747,
+});
+
+const saturn = new CelestialBody({
   name: "Saturn",
-};
-
-const uranus: CelestialBody = {
-  hasParent: true,
+  distance: 586137.64,
   radius: 23.87,
+  orbitalPeriod: 10747,
   parent: sun,
-  distanceToParent: 1180473.01,
-  color: 0x20b2aa,
-  period: 30589,
+});
+
+const uranus = new CelestialBody({
   name: "Uranus",
-};
-
-const neptune: CelestialBody = {
-  hasParent: true,
+  distance: 1180473.01,
   radius: 23.87,
+  orbitalPeriod: 30589,
   parent: sun,
-  distanceToParent: 1844489.08,
-  color: 0x0000ff,
-  period: 59800,
+});
+
+const neptune = new CelestialBody({
   name: "Neptune",
-};
+  distance: 1844489.08,
+  radius: 23.87,
+  orbitalPeriod: 59800,
+  parent: sun,
+});
 
 export const solarSystem: CelestialBody[] = [
   sun,
