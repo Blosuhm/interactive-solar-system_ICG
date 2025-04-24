@@ -10,6 +10,8 @@ type CelestialBodyConfig = {
   color?: CelestialBody["color"];
 };
 
+const SEGMENTS = 128;
+
 export default class CelestialBody {
   private readonly clock = new THREE.Clock();
 
@@ -46,7 +48,7 @@ export default class CelestialBody {
       color: color,
       emissive: lightSource ? color : undefined,
     });
-    const sphereGeometry = new THREE.SphereGeometry(radius);
+    const sphereGeometry = new THREE.SphereGeometry(radius, SEGMENTS, SEGMENTS);
     this.object = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
     this.object.position.set(0, 0, this._distance);
@@ -67,11 +69,13 @@ export default class CelestialBody {
     if (this.orbitalPeriod === 0) return;
 
     const angle = (2 * Math.PI) / (this.orbitalPeriod / 10);
-    this.orbit.rotateY(angle * this.clock.getDelta());
+    const rotation = angle * this.clock.getDelta();
+    this.orbit.rotateY(rotation);
+    this.object.rotateY(-rotation);
   };
 
   public set distance(distance: number) {
-    if (distance < 0) {
+    if (distance < 0 || this.parent === null) {
       return;
     }
     this._distance = distance;
