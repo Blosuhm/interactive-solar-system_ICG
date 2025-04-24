@@ -1,13 +1,32 @@
 import CelestialBody from "@/three/celestial-body";
 import { SystemScene } from "@/three/init";
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import * as THREE from "three";
 
-const { camera, controls, scene } = SystemScene.instance;
+const { camera, controls, scene, renderer } = SystemScene.instance;
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-export function useSelectedBody() {
+
+type SelectedBodyContext = {
+  selectedBody: CelestialBody | null;
+  setSelectedBody: Dispatch<SetStateAction<CelestialBody | null>>;
+};
+
+const SelectedBodyContext = createContext<SelectedBodyContext>(undefined!);
+
+export function SelectedBodyProvider({
+  children,
+}: {
+  children: Readonly<React.ReactNode>;
+}) {
   const [selectedBody, setSelectedBody] = useState<CelestialBody | null>(null);
 
   useEffect(() => {
@@ -51,16 +70,24 @@ export function useSelectedBody() {
       controls.orbit(body.object, 4 * body.radius);
     };
 
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    renderer.domElement.addEventListener("mousedown", handleMouseDown);
+    renderer.domElement.addEventListener("mousemove", handleMouseMove);
+    renderer.domElement.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      renderer.domElement.removeEventListener("mousedown", handleMouseDown);
+      renderer.domElement.removeEventListener("mousemove", handleMouseMove);
+      renderer.domElement.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
 
-  return { selectedBody, setSelectedBody };
+  return (
+    <SelectedBodyContext.Provider value={{ selectedBody, setSelectedBody }}>
+      {children}
+    </SelectedBodyContext.Provider>
+  );
+}
+
+export function useSelectedBody() {
+  return useContext(SelectedBodyContext);
 }
