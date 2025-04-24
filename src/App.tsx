@@ -5,16 +5,12 @@ import CelestialBody from "./three/celestial-body";
 import { SystemScene } from "./three/init";
 import { solarSystem } from "./three/solar-system";
 
-const { camera, controls } = SystemScene.instance;
+const { controls } = SystemScene.instance;
 
 function App() {
   const { selectedBody, setSelectedBody } = useSelectedBody();
 
   const handleOnClick = (celestialBody: CelestialBody) => {
-    camera.parent?.remove(camera);
-    if (celestialBody.parent !== null) {
-      celestialBody.object?.add(camera);
-    }
     controls.orbit(celestialBody.object, 4 * celestialBody.radius);
     setSelectedBody(celestialBody);
   };
@@ -41,7 +37,7 @@ function SelectedBodyMenu({ selectedBody }: SelectedBodyMenuProps) {
           <Slider
             defaultValue={[selectedBody.distance]}
             onValueChange={(value) => {
-              const prevDistance = selectedBody.distance;
+              // const prevDistance = selectedBody.distance;
               selectedBody.distance = value[0];
               // controls.updateDistance(selectedBody.distance - prevDistance);
             }}

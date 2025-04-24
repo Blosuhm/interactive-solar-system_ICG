@@ -37,6 +37,9 @@ function createSpectatorControls(
   let shouldOrbit = true;
 
   function orbit(targetObject: THREE.Object3D, distance = 0) {
+    camera.parent?.remove(camera);
+    targetObject.add(camera);
+
     shouldOrbit = true;
 
     orbitControls.target.set(0, 0, 0);

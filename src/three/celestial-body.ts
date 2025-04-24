@@ -53,7 +53,7 @@ export default class CelestialBody {
 
     this.object.position.set(0, 0, this._distance);
 
-    if (lightSource) {
+    if (this.lightSource) {
       const l = new THREE.PointLight(color, 1000000, 0, 0.5);
       this.object.add(l);
     }

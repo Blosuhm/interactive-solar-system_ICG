@@ -48,10 +48,6 @@ export function useSelectedBody() {
       const body = selectedObject.userData.celestialBody as CelestialBody;
 
       setSelectedBody(body);
-      camera.parent?.remove(camera);
-      if (body.parent !== null) {
-        body.object?.add(camera);
-      }
       controls.orbit(body.object, 4 * body.radius);
     };
 
