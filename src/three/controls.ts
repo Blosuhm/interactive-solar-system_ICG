@@ -39,11 +39,13 @@ function createSpectatorControls(
   function orbit(targetObject: THREE.Object3D, distance = 0) {
     shouldOrbit = true;
 
-    orbitControls.target = targetObject.position;
+    orbitControls.target.set(0, 0, 0);
 
-    fakeCamera.position.copy(
-      targetObject.position.clone().add(new THREE.Vector3(distance, 0, 0)),
-    );
+    fakeCamera.position.copy(new THREE.Vector3(distance, 0, 0));
+  }
+
+  function updateFakeCamera(camera: THREE.PerspectiveCamera) {
+    fakeCamera.copy(camera);
   }
 
   function updateDistance(deltaDistance: number) {
@@ -189,7 +191,7 @@ function createSpectatorControls(
     connect();
   }
 
-  return { connect, update, orbit, updateDistance };
+  return { connect, update, orbit, updateDistance, updateFakeCamera };
 }
 
 function clamp(val: number, min: number, max: number) {

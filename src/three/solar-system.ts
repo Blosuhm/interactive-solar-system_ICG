@@ -37,6 +37,14 @@ const earth = new CelestialBody({
   parent: sun,
 });
 
+const moon = new CelestialBody({
+  name: "Moon",
+  distance: 152 * 3,
+  radius: 0.712,
+  orbitalPeriod: 27.3,
+  parent: earth,
+});
+
 const mars = new CelestialBody({
   name: "Mars",
   distance: 93454.11,
@@ -82,6 +90,7 @@ export const solarSystem: CelestialBody[] = [
   mercury,
   venus,
   earth,
+  moon,
   mars,
   jupiter,
   saturn,
