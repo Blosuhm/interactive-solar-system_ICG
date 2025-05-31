@@ -249,8 +249,46 @@ function DistanceEditor({ selectedBody }: SelectedBodyProp) {
     </div>
   );
 }
+
+const MIN_ORBIT = 2;
+const MAX_ORBIT = 1000;
+
 function PeriodEditor({ selectedBody }: SelectedBodyProp) {
-  return <p>Period Editor ({selectedBody.orbitalPeriod})</p>;
+  const [period, setPeriod] = useState(selectedBody.orbitalPeriod);
+  useEffect(() => {
+    setPeriod(selectedBody.orbitalPeriod);
+  }, [selectedBody.orbitalPeriod]);
+
+  return (
+    <div className="space-y-2">
+      <p className="text-lg">Orbital Period:</p>
+      <div className="flex gap-2">
+        <Slider
+          value={[period]}
+          onValueChange={(value) => {
+            selectedBody.orbitalPeriod = value[0];
+            setPeriod(value[0]);
+          }}
+          min={MIN_ORBIT}
+          max={MAX_ORBIT}
+          step={1}
+        />
+        <Input
+          className="w-[9rem]"
+          type="number"
+          value={Math.round(period * 100) / 100}
+          onChange={(ev) => {
+            let newPeriod = parseFloat(ev.target.value);
+            if (newPeriod > MAX_ORBIT) newPeriod = MAX_ORBIT;
+            else if (newPeriod < MIN_ORBIT) newPeriod = MIN_ORBIT;
+
+            selectedBody.orbitalPeriod = newPeriod;
+            setPeriod(newPeriod);
+          }}
+        />
+      </div>
+    </div>
+  );
 }
 function TextureEditor({ selectedBody }: SelectedBodyProp) {
   return <p>Texture Editor ({selectedBody.color.getHex()})</p>;

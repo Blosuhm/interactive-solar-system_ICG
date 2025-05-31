@@ -97,3 +97,5 @@ export const solarSystem: CelestialBody[] = [
   uranus,
   neptune,
 ];
+
+export const solarSystemRoot = sun;

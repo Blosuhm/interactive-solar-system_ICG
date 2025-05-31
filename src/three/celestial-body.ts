@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { z } from "zod";
+import { Animate } from "./init";
 
 type CelestialBodyConfig = {
   name: CelestialBody["name"];
@@ -14,6 +16,28 @@ const SEGMENTS = 128;
 
 export const celestialBodyRecord = new Map<number, CelestialBody>();
 
+interface CelestialBodyJSON {
+  name: string;
+  radius: number;
+  distance: number;
+  lightSource: boolean;
+  orbitalPeriod: number;
+  satellites?: CelestialBodyJSON[];
+}
+
+// TODO: Make config for limits
+const celestialBodyJSONSchema: z.ZodType<CelestialBodyJSON> = z.object({
+  name: z.string().min(1),
+  radius: z.number().gt(0),
+  distance: z.number().gte(0),
+  lightSource: z.boolean(),
+  orbitalPeriod: z.number().gte(0),
+  satellites: z
+    .lazy(() => celestialBodyJSONSchema)
+    .array()
+    .optional(),
+});
+
 export default class CelestialBody {
   private readonly clock = new THREE.Clock();
 
@@ -24,18 +48,23 @@ export default class CelestialBody {
   private _distance: number;
   private _radius: number;
   private readonly _radius_scale: number;
-  public readonly orbitalPeriod: number;
+  private _orbitalPeriod: number;
   private _lightSource: boolean;
   public readonly object: THREE.Object3D;
   public readonly body: THREE.Object3D;
   private _parent: CelestialBody | null;
+  private _isPaused: boolean | undefined;
   public readonly orbit: THREE.Object3D;
+
+  private readonly _satelliteSet = new Set<CelestialBody>();
 
   private readonly _bodyMaterial: THREE.MeshLambertMaterial;
 
   private _pointLight: THREE.PointLight;
 
   public readonly color: THREE.Color;
+
+  public animation: Animate;
 
   public constructor({
     name,
@@ -53,7 +82,7 @@ export default class CelestialBody {
     celestialBodyRecord.set(this.id, this);
 
     // TODO: Figure out shadows and lighting
-    this._pointLight = new THREE.PointLight(color, 10000, 0, 0.5);
+    this._pointLight = new THREE.PointLight(color, 100, 0, 0);
     this._pointLight.castShadow = true;
     this._pointLight.shadow.camera.near = 0.1;
     this._pointLight.shadow.camera.far = 10000;
@@ -66,9 +95,10 @@ export default class CelestialBody {
     this._distance = (distance * 0.1) / 80;
     this._radius = radius * 0.1;
     this._radius_scale = 1 / this._radius;
-    this.orbitalPeriod = orbitalPeriod;
+    this._orbitalPeriod = orbitalPeriod;
     this.color = new THREE.Color(color);
     this._lightSource = lightSource;
+    this._isPaused = parent === null ? undefined : false;
 
     this._parent = parent;
 
@@ -101,13 +131,24 @@ export default class CelestialBody {
     this.orbit.add(this.object);
 
     this._parent?.object.add(this.orbit);
+
+    this._parent?._addToChildrenSet(this);
+
+    this.animation = {
+      animationLoop: this.animate,
+      animate: [],
+    };
+
+    this._parent?.animation.animate.push(this.animation);
   }
 
-  public readonly animate: XRFrameRequestCallback = () => {
-    if (this.orbitalPeriod === 0) return;
+  public readonly animate: XRFrameRequestCallback = (time, frame) => {
+    this.animation.animate.forEach((a) => a.animationLoop?.(time, frame));
+    const delta = this.clock.getDelta();
+    if (this._orbitalPeriod === 0 || this.isPaused) return;
 
-    const angle = (2 * Math.PI) / (this.orbitalPeriod / 10);
-    const rotation = angle * this.clock.getDelta();
+    const angle = (2 * Math.PI) / (this._orbitalPeriod / 10);
+    const rotation = angle * delta;
     this.orbit.rotateY(rotation);
     this.object.rotateY(-rotation);
   };
@@ -143,6 +184,9 @@ export default class CelestialBody {
     if (this._parent === null)
       throw Error("Cannot change parent of root celestial body");
 
+    this._parent._removeToChildrenSet(this);
+    parent._addToChildrenSet(this);
+
     this._parent = parent;
     this.orbit.parent?.remove(this.orbit);
     parent.object.add(this.orbit);
@@ -151,6 +195,7 @@ export default class CelestialBody {
   public get parent(): CelestialBody | null {
     return this._parent;
   }
+
   public set lightSource(lightSource: boolean) {
     if (lightSource && !this._lightSource) {
       this.object.add(this._pointLight);
@@ -176,5 +221,96 @@ export default class CelestialBody {
 
   public get name() {
     return this._name;
+  }
+
+  public set orbitalPeriod(period: number) {
+    this._orbitalPeriod = period;
+  }
+
+  public get orbitalPeriod() {
+    return this._orbitalPeriod;
+  }
+
+  public get isPaused(): boolean {
+    return this.parent === null ? !!this._isPaused : this.parent.isPaused;
+  }
+
+  public set isPaused(isPaused) {
+    this.parent === null
+      ? (this._isPaused = isPaused)
+      : (this.parent.isPaused = isPaused);
+  }
+
+  private _addToChildrenSet(celestialBody: CelestialBody) {
+    this._satelliteSet.add(celestialBody);
+  }
+
+  private _removeToChildrenSet(celestialBody: CelestialBody) {
+    this._satelliteSet.delete(celestialBody);
+  }
+
+  public export() {
+    const { name, radius, distance, lightSource, orbitalPeriod } = this;
+    const root: CelestialBodyJSON = {
+      name,
+      radius,
+      distance,
+      lightSource,
+      orbitalPeriod,
+    };
+
+    if (this._satelliteSet.size === 0) {
+      return root;
+    }
+
+    root.satellites = [];
+    this._satelliteSet.forEach((satellite) =>
+      root.satellites?.push(satellite.export()),
+    );
+
+    return root;
+  }
+
+  private static _import(
+    {
+      name,
+      distance,
+      radius,
+      lightSource,
+      orbitalPeriod,
+      satellites,
+    }: CelestialBodyJSON,
+    parent: CelestialBody | null,
+  ) {
+    const body = new CelestialBody({
+      name,
+      distance,
+      radius,
+      lightSource,
+      orbitalPeriod,
+      parent,
+    });
+
+    satellites?.forEach((satellite) => CelestialBody._import(satellite, body));
+
+    return body;
+  }
+
+  public static import(content: string) {
+    let json: unknown;
+    try {
+      json = JSON.parse(content);
+    } catch (e) {
+      console.error("parse error");
+      return null;
+    }
+    const result = celestialBodyJSONSchema.safeParse(json);
+    if (!result.success) {
+      console.error("failed to validate");
+      return null;
+    }
+
+    const root = result.data;
+    return CelestialBody._import(root, null);
   }
 }
