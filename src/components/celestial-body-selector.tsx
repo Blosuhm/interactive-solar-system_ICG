@@ -1,61 +1,45 @@
 import { cn, downloadFile } from "@/lib/utils";
 import CelestialBody from "@/three/celestial-body";
 import { SystemScene } from "@/three/init";
-import { solarSystem, solarSystemRoot } from "@/three/solar-system";
-import { FileDown, FileUp, Pause, Play } from "lucide-react";
+import { Dices, FileDown, FileUp, Pause, Play, Plus } from "lucide-react";
 import { ComponentRef, useRef, useState } from "react";
+import { useCelestialSystem } from "./celestial-system-provider";
 import { useSelectedBody } from "./selected-body-provider";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
-const { controls } = SystemScene.instance;
 
 export default function CelestialBodyList() {
   const { setSelectedBody } = useSelectedBody();
   const handleOnClick = (celestialBody: CelestialBody) => {
     setSelectedBody(celestialBody);
-    controls.orbit(celestialBody.object, 4 * celestialBody.radius);
   };
-  const [isPaused, setIsPaused] = useState(() => solarSystemRoot.isPaused);
+  const [isPaused, setIsPaused] = useState(
+    () => SystemScene.instance.celestialSystemRoot?.isPaused ?? false,
+  );
+
   const toggleBodyRotation = () => {
-    solarSystemRoot.isPaused = !solarSystemRoot.isPaused;
-    setIsPaused(solarSystemRoot.isPaused);
+    const root = SystemScene.instance.celestialSystemRoot;
+    if (root === null) return;
+    root.isPaused = !root.isPaused;
+    setIsPaused(root.isPaused);
   };
+
+  const {
+    celestialSystem,
+    celestialSystemRoot,
+    setCelestialSystemRoot,
+    refreshCelestialSystem,
+  } = useCelestialSystem();
 
   const fileInputRef = useRef<ComponentRef<"input">>(null);
 
   return (
-    <aside className="absolute top-8 right-8 flex gap-8">
-      <input
-        ref={fileInputRef}
-        className="hidden"
-        type="file"
-        onChange={async (e) => {
-          if (e.target.files === null || e.target.files.length === 0) return;
-          const file = e.target.files[0];
-          const content = await file.text();
-          console.log(CelestialBody.import(content));
-        }}
-      />
-      <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
-        <FileUp />
-      </Button>
-      <Button
-        variant="secondary"
-        onClick={() =>
-          downloadFile(
-            `planetary-system-${Date.now()}.json`,
-            JSON.stringify(solarSystemRoot.export(), undefined, 2),
-          )
-        }
-      >
-        <FileDown />
-      </Button>
+    <aside className="absolute top-8 right-8 bottom-8 grid grid-cols-2 grid-rows-[auto_auto_1fr] gap-2 overflow-hidden">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             size="icon"
-            className="relative cursor-pointer"
+            className="relative w-full cursor-pointer"
             onClick={toggleBodyRotation}
           >
             <Pause
@@ -74,17 +58,65 @@ export default function CelestialBodyList() {
         </TooltipTrigger>
         <TooltipContent>{isPaused ? "Unpause" : "Pause"} System</TooltipContent>
       </Tooltip>
-      <ul className="w-32 space-y-4">
-        {solarSystem.map((celestialBody) => {
+      <Button type="button" size="icon" className="w-full">
+        <Dices />
+      </Button>
+      <input
+        ref={fileInputRef}
+        className="hidden"
+        type="file"
+        onChange={async (e) => {
+          if (e.target.files === null || e.target.files.length === 0) return;
+          const file = e.target.files[0];
+          const content = await file.text();
+          const newSystem = CelestialBody.import(content);
+          if (newSystem !== null) setCelestialSystemRoot(newSystem);
+        }}
+      />
+      <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
+        <FileUp />
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={() =>
+          downloadFile(
+            `planetary-system-${Date.now()}.json`,
+            JSON.stringify(celestialSystemRoot.export(), undefined, 2),
+          )
+        }
+      >
+        <FileDown />
+      </Button>
+      <ul className="col-span-2 mt-2 h-full w-32 space-y-4 overflow-scroll">
+        <li>
+          <Button
+            className="w-full"
+            onClick={() => {
+              const newBody = new CelestialBody({
+                name: "Body",
+                radius: 3,
+                distance: 30,
+                orbitalPeriod: 100,
+                parent: celestialSystemRoot,
+              });
+              refreshCelestialSystem();
+              setSelectedBody(newBody);
+            }}
+          >
+            <Plus /> Add
+          </Button>
+        </li>
+        {celestialSystem.map((celestialBody) => {
           return (
-            <Button
-              size="sm"
-              key={celestialBody.name}
-              className="w-full"
-              onClick={() => handleOnClick(celestialBody)}
-            >
-              {celestialBody.name}
-            </Button>
+            <li key={celestialBody.name}>
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={() => handleOnClick(celestialBody)}
+              >
+                {celestialBody.name}
+              </Button>
+            </li>
           );
         })}
       </ul>

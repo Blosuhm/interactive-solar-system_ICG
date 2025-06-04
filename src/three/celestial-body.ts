@@ -88,12 +88,11 @@ export default class CelestialBody {
     this._pointLight.shadow.camera.far = 10000;
     this._pointLight.shadow.mapSize.width = 4096;
     this._pointLight.shadow.mapSize.height = 4096;
-    this._pointLight.shadow.bias = -0.000007;
+    this._pointLight.shadow.bias = -0.00005;
 
     this._name = name;
-    // TODO: Fix scales
-    this._distance = (distance * 0.1) / 80;
-    this._radius = radius * 0.1;
+    this._distance = parent === null ? 0 : distance;
+    this._radius = radius;
     this._radius_scale = 1 / this._radius;
     this._orbitalPeriod = orbitalPeriod;
     this.color = new THREE.Color(color);
@@ -120,7 +119,13 @@ export default class CelestialBody {
     this.body.castShadow = true;
     this.object.add(this.body);
 
-    this.object.position.set(0, 0, this._distance);
+    if (this._parent !== null) {
+      this.object.position.set(
+        0,
+        0,
+        this._distance + this._radius + this._parent._radius,
+      );
+    }
 
     if (this._lightSource) {
       this.object.add(this._pointLight);
@@ -132,14 +137,14 @@ export default class CelestialBody {
 
     this._parent?.object.add(this.orbit);
 
-    this._parent?._addToChildrenSet(this);
+    this._parent?._addToSatelliteSet(this);
 
     this.animation = {
       animationLoop: this.animate,
-      animate: [],
+      animate: new Set(),
     };
 
-    this._parent?.animation.animate.push(this.animation);
+    this._parent?.animation.animate.add(this.animation);
   }
 
   public readonly animate: XRFrameRequestCallback = (time, frame) => {
@@ -154,11 +159,15 @@ export default class CelestialBody {
   };
 
   public set distance(distance: number) {
-    if (distance < 0 || this.parent === null) {
+    if (distance < 0 || this._parent === null) {
       return;
     }
     this._distance = distance;
-    this.object.position.set(0, 0, distance);
+    this.object.position.set(
+      0,
+      0,
+      this._distance + this._radius + this._parent._radius,
+    );
   }
 
   public get distance() {
@@ -174,22 +183,33 @@ export default class CelestialBody {
     const scale = this._radius_scale * radius;
 
     this.body.scale.setScalar(scale);
+    if (this._parent !== null) {
+      this.object.position.set(
+        0,
+        0,
+        this._distance + this._radius + this._parent._radius,
+      );
+    }
+
+    this._satelliteSet.forEach((satellite) => {
+      satellite.distance = satellite._distance;
+    });
   }
 
   public get radius() {
     return this._radius;
   }
 
-  public set parent(parent: CelestialBody) {
+  public set parent(parent: CelestialBody | null) {
     if (this._parent === null)
       throw Error("Cannot change parent of root celestial body");
 
-    this._parent._removeToChildrenSet(this);
-    parent._addToChildrenSet(this);
+    this._parent._removeToSatelliteSet(this);
+    parent?._addToSatelliteSet(this);
 
     this._parent = parent;
     this.orbit.parent?.remove(this.orbit);
-    parent.object.add(this.orbit);
+    parent?.object.add(this.orbit);
   }
 
   public get parent(): CelestialBody | null {
@@ -241,11 +261,11 @@ export default class CelestialBody {
       : (this.parent.isPaused = isPaused);
   }
 
-  private _addToChildrenSet(celestialBody: CelestialBody) {
+  private _addToSatelliteSet(celestialBody: CelestialBody) {
     this._satelliteSet.add(celestialBody);
   }
 
-  private _removeToChildrenSet(celestialBody: CelestialBody) {
+  private _removeToSatelliteSet(celestialBody: CelestialBody) {
     this._satelliteSet.delete(celestialBody);
   }
 
@@ -312,5 +332,14 @@ export default class CelestialBody {
 
     const root = result.data;
     return CelestialBody._import(root, null);
+  }
+
+  public getCelestialSystem() {
+    const celestialSystem: CelestialBody[] = [this];
+    this._satelliteSet.forEach((satellite) =>
+      celestialSystem.push(...satellite.getCelestialSystem()),
+    );
+
+    return celestialSystem;
   }
 }

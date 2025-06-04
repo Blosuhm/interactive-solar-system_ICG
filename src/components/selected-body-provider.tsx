@@ -81,6 +81,11 @@ export function SelectedBodyProvider({
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedBody === null) return;
+    controls.orbit(selectedBody.object, 4 * selectedBody.radius);
+  }, [selectedBody]);
+
   return (
     <SelectedBodyContext.Provider value={{ selectedBody, setSelectedBody }}>
       {children}

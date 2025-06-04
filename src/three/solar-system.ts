@@ -1,29 +1,25 @@
-// NOTE: All distances considered in this file are relative do the radius of
-// mercury, that is, the radius of mercury is considered to be one unit of
-// distance.
-
 import CelestialBody from "./celestial-body";
 
 const sun = new CelestialBody({
   name: "Sun",
   distance: 0,
-  radius: 285.08,
+  radius: 10,
   lightSource: true,
   orbitalPeriod: 0,
 });
 
-const mercury = new CelestialBody({
+new CelestialBody({
   name: "Mercury",
   color: 0xff0000,
-  distance: 23773.41,
+  distance: 10,
   radius: 1,
   orbitalPeriod: 88,
   parent: sun,
 });
 
-const venus = new CelestialBody({
+new CelestialBody({
   name: "Venus",
-  distance: 44267.74,
+  distance: 20,
   radius: 2.48,
   orbitalPeriod: 225,
   parent: sun,
@@ -31,71 +27,58 @@ const venus = new CelestialBody({
 
 const earth = new CelestialBody({
   name: "Earth",
-  distance: 62302.74,
+  distance: 26,
   radius: 2.61,
   orbitalPeriod: 365,
   parent: sun,
 });
 
-const moon = new CelestialBody({
+new CelestialBody({
   name: "Moon",
-  distance: 152 * 3,
+  distance: 3,
   radius: 0.712,
   orbitalPeriod: 27.3,
   parent: earth,
 });
 
-const mars = new CelestialBody({
+new CelestialBody({
   name: "Mars",
-  distance: 93454.11,
+  distance: 32,
   radius: 1.39,
   orbitalPeriod: 687,
   parent: sun,
 });
 
-const jupiter = new CelestialBody({
+new CelestialBody({
   name: "Jupiter",
-  distance: 319301.55,
-  radius: 28.66,
-  orbitalPeriod: 4331,
+  distance: 38,
+  radius: 5,
+  orbitalPeriod: 800,
   parent: sun,
 });
 
-const saturn = new CelestialBody({
+new CelestialBody({
   name: "Saturn",
-  distance: 586137.64,
-  radius: 23.87,
-  orbitalPeriod: 10747,
+  distance: 54,
+  radius: 4.3,
+  orbitalPeriod: 1074,
   parent: sun,
 });
 
-const uranus = new CelestialBody({
+new CelestialBody({
   name: "Uranus",
-  distance: 1180473.01,
-  radius: 23.87,
-  orbitalPeriod: 30589,
+  distance: 60,
+  radius: 3,
+  orbitalPeriod: 3058,
   parent: sun,
 });
 
-const neptune = new CelestialBody({
+new CelestialBody({
   name: "Neptune",
-  distance: 1844489.08,
-  radius: 23.87,
-  orbitalPeriod: 59800,
+  distance: 68,
+  radius: 2.8,
+  orbitalPeriod: 5980,
   parent: sun,
 });
 
-export const solarSystem: CelestialBody[] = [
-  sun,
-  mercury,
-  venus,
-  earth,
-  moon,
-  mars,
-  jupiter,
-  saturn,
-  uranus,
-  neptune,
-];
-
-export const solarSystemRoot = sun;
+export { sun };

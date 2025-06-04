@@ -1,7 +1,9 @@
+import { limits } from "@/configs";
 import CelestialBody, { celestialBodyRecord } from "@/three/celestial-body";
 import { SelectValue } from "@radix-ui/react-select";
-import { Pencil, PencilOff } from "lucide-react";
+import { Pencil, PencilOff, Trash2 } from "lucide-react";
 import { ComponentRef, useEffect, useRef, useState } from "react";
+import { useCelestialSystem } from "./celestial-system-provider";
 import { useSelectedBody } from "./selected-body-provider";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -11,10 +13,11 @@ import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 
 export default function SelectedBodyMenu() {
-  const { selectedBody } = useSelectedBody();
+  const { selectedBody, setSelectedBody } = useSelectedBody();
+  const { refreshCelestialSystem } = useCelestialSystem();
   if (selectedBody === null) return null;
   return (
-    <aside className="text-foreground absolute top-8 left-8 w-96 space-y-4 rounded-md border-2 border-white bg-black/70 p-4">
+    <aside className="text-foreground absolute top-8 bottom-8 left-8 w-96 space-y-4 overflow-scroll rounded-md border-2 border-white bg-black/70 p-4">
       <div className="grid grid-cols-2 gap-2">
         <NameEditor selectedBody={selectedBody} />
         <LightSourceEditor selectedBody={selectedBody} />
@@ -24,6 +27,21 @@ export default function SelectedBodyMenu() {
       <DistanceEditor selectedBody={selectedBody} />
       <PeriodEditor selectedBody={selectedBody} />
       <TextureEditor selectedBody={selectedBody} />
+      {selectedBody.parent !== null && (
+        <Button
+          type="button"
+          variant="destructive"
+          className="cursor-pointer"
+          onClick={() => {
+            setSelectedBody(selectedBody.parent);
+            selectedBody.parent = null;
+            refreshCelestialSystem();
+          }}
+        >
+          <Trash2 />
+          Delete
+        </Button>
+      )}
     </aside>
   );
 }
@@ -35,9 +53,15 @@ type SelectedBodyProp = {
 function NameEditor({ selectedBody }: SelectedBodyProp) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(selectedBody.name);
+  const { refreshCelestialSystem } = useCelestialSystem();
   useEffect(() => {
     setName(selectedBody.name);
   }, [selectedBody.name]);
+
+  const updateName = (name: string) => {
+    setName(name);
+    refreshCelestialSystem();
+  };
 
   useEffect(() => {
     if (!editing) return;
@@ -60,15 +84,15 @@ function NameEditor({ selectedBody }: SelectedBodyProp) {
           ref={inputRef}
           value={name}
           onChange={(event) => {
-            setName(event.target.value);
+            updateName(event.target.value);
           }}
           onBlur={() => {
             const text = name.trim();
             if (text.length > 0) {
               selectedBody.name = text;
-              setName(text);
+              updateName(text);
             } else {
-              setName(selectedBody.name);
+              updateName(selectedBody.name);
             }
             exitEditingMode();
           }}
@@ -165,14 +189,13 @@ function ParentEditor({ selectedBody }: SelectedBodyProp) {
   );
 }
 
-const MIN_RADIUS = 0;
-const MAX_RADIUS = 500;
-
 function RadiusEditor({ selectedBody }: SelectedBodyProp) {
   const [radius, setRadius] = useState(selectedBody.radius);
   useEffect(() => {
     setRadius(selectedBody.radius);
   }, [selectedBody.radius]);
+
+  const { min, max } = limits.radius;
 
   return (
     <div className="space-y-2">
@@ -184,8 +207,8 @@ function RadiusEditor({ selectedBody }: SelectedBodyProp) {
             selectedBody.radius = value[0];
             setRadius(value[0]);
           }}
-          min={MIN_RADIUS}
-          max={MAX_RADIUS}
+          min={min}
+          max={max}
           step={1}
         />
         <Input
@@ -194,8 +217,8 @@ function RadiusEditor({ selectedBody }: SelectedBodyProp) {
           value={Math.round(radius * 100) / 100}
           onChange={(ev) => {
             let newRadius = parseFloat(ev.target.value);
-            if (newRadius > MAX_RADIUS) newRadius = MAX_RADIUS;
-            else if (newRadius < MIN_RADIUS) newRadius = MIN_RADIUS;
+            if (newRadius > max) newRadius = max;
+            else if (newRadius < min) newRadius = min;
 
             selectedBody.radius = newRadius;
             setRadius(newRadius);
@@ -206,30 +229,26 @@ function RadiusEditor({ selectedBody }: SelectedBodyProp) {
   );
 }
 
-const MIN = 0;
-const MAX = 10000;
-
 function DistanceEditor({ selectedBody }: SelectedBodyProp) {
   const [distance, setDistance] = useState(selectedBody.distance);
+  const { min, max } = limits.distance;
   useEffect(() => {
     setDistance(selectedBody.distance);
   }, [selectedBody.distance]);
   if (selectedBody.parent === null) return null;
 
-  const minDistance = selectedBody.parent.radius + selectedBody.radius;
-  const min = minDistance > MIN ? minDistance : MIN;
   return (
     <div className="space-y-2">
       <p className="text-lg">Distance to Parent:</p>
       <div className="flex gap-2">
         <Slider
-          value={[distance]}
+          value={[distance * 100]}
           onValueChange={(value) => {
-            selectedBody.distance = value[0];
-            setDistance(value[0]);
+            selectedBody.distance = value[0] / 100;
+            setDistance(value[0] / 100);
           }}
-          min={min}
-          max={MAX}
+          min={min * 100}
+          max={max * 100}
           step={1}
         />
         <Input
@@ -238,7 +257,7 @@ function DistanceEditor({ selectedBody }: SelectedBodyProp) {
           value={Math.round(distance * 100) / 100}
           onChange={(ev) => {
             let newDistance = parseFloat(ev.target.value);
-            if (newDistance > MAX) newDistance = MAX;
+            if (newDistance > max) newDistance = max;
             else if (newDistance < min) newDistance = min;
 
             selectedBody.distance = newDistance;
@@ -250,14 +269,13 @@ function DistanceEditor({ selectedBody }: SelectedBodyProp) {
   );
 }
 
-const MIN_ORBIT = 2;
-const MAX_ORBIT = 1000;
-
 function PeriodEditor({ selectedBody }: SelectedBodyProp) {
   const [period, setPeriod] = useState(selectedBody.orbitalPeriod);
+  const { min, max } = limits.orbitalPeriod;
   useEffect(() => {
     setPeriod(selectedBody.orbitalPeriod);
   }, [selectedBody.orbitalPeriod]);
+  if (selectedBody.parent === null) return null;
 
   return (
     <div className="space-y-2">
@@ -269,9 +287,9 @@ function PeriodEditor({ selectedBody }: SelectedBodyProp) {
             selectedBody.orbitalPeriod = value[0];
             setPeriod(value[0]);
           }}
-          min={MIN_ORBIT}
-          max={MAX_ORBIT}
-          step={1}
+          min={min}
+          max={max}
+          step={0.01}
         />
         <Input
           className="w-[9rem]"
@@ -279,8 +297,8 @@ function PeriodEditor({ selectedBody }: SelectedBodyProp) {
           value={Math.round(period * 100) / 100}
           onChange={(ev) => {
             let newPeriod = parseFloat(ev.target.value);
-            if (newPeriod > MAX_ORBIT) newPeriod = MAX_ORBIT;
-            else if (newPeriod < MIN_ORBIT) newPeriod = MIN_ORBIT;
+            if (newPeriod > max) newPeriod = max;
+            else if (newPeriod < min) newPeriod = min;
 
             selectedBody.orbitalPeriod = newPeriod;
             setPeriod(newPeriod);
