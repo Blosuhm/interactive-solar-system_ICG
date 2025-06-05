@@ -9,7 +9,7 @@ function createControls(camera: THREE.Camera, domElement: HTMLElement) {
     camera.parent?.remove(camera);
     targetObject.add(camera);
 
-    fakeCamera.position.copy(new THREE.Vector3(distance, 0, 0));
+    fakeCamera.position.copy(new THREE.Vector3(distance, distance, 0));
   }
 
   function updateFakeCamera(camera: THREE.PerspectiveCamera) {
