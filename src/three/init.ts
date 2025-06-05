@@ -32,10 +32,12 @@ export class SystemScene {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
-    // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
     const stats = new Stats();
     document.body.appendChild(this.renderer.domElement);
-    document.body.appendChild(stats.dom);
+    if (import.meta.env.DEV) {
+      document.body.appendChild(stats.dom);
+    }
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -73,10 +75,6 @@ export class SystemScene {
     const starMaterial = new THREE.PointsMaterial({ color: 0xffffff });
     const starField = new THREE.Points(starGeometry, starMaterial);
     this.scene.add(starField);
-    // const loader = new THREE.TextureLoader();
-    // loader.load("/interactive-solar-system_ICG/skybox.png", (texture) => {
-    //   this.scene.background = texture;
-    // });
 
     // Controls
     this.controls = createControls(this.camera, this.renderer.domElement);
@@ -91,7 +89,10 @@ export class SystemScene {
       this.controls.update();
       this.animate.animate.forEach((a) => a.animationLoop?.(time, frame));
       this.renderer.render(this.scene, this.camera);
-      stats.update();
+
+      if (import.meta.env.DEV) {
+        stats.update();
+      }
     };
 
     this._systemRoot = sun;
