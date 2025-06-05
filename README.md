@@ -13,6 +13,12 @@ pnpm run dev
 Preview locally:
 
 ```bash
+pnpm run build
+```
+
+Followed by
+
+```bash
 pnpm run preview
 ```
 
