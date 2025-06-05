@@ -18,7 +18,7 @@ export default function SelectedBodyMenu() {
   const { refreshCelestialSystem } = useCelestialSystem();
   if (selectedBody === null) return null;
   return (
-    <aside className="text-foreground absolute top-8 bottom-8 left-8 w-96 space-y-4 overflow-scroll rounded-md border-2 border-white bg-black/70 p-4">
+    <aside className="text-foreground absolute top-8 bottom-8 left-8 w-72 space-y-4 overflow-scroll rounded-md border-2 border-white bg-black/70 p-4">
       <div className="grid grid-cols-2 gap-2">
         <NameEditor selectedBody={selectedBody} />
         <LightSourceEditor selectedBody={selectedBody} />
