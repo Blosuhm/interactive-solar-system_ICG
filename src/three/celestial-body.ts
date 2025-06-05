@@ -219,6 +219,8 @@ export default class CelestialBody {
     this._parent = parent;
     this.orbit.parent?.remove(this.orbit);
     parent?.object.add(this.orbit);
+
+    this.distance = this._distance;
   }
 
   public get parent(): CelestialBody | null {

@@ -59,17 +59,22 @@ export default function CelestialBodyList() {
         </TooltipTrigger>
         <TooltipContent>{isPaused ? "Unpause" : "Pause"} System</TooltipContent>
       </Tooltip>
-      <Button
-        type="button"
-        size="icon"
-        className="w-full"
-        onClick={() => {
-          celestialBodyRecord.clear();
-          setCelestialSystemRoot(RandomSystemGenerator.generateSystem());
-        }}
-      >
-        <Dices />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            size="icon"
+            className="w-full"
+            onClick={() => {
+              celestialBodyRecord.clear();
+              setCelestialSystemRoot(RandomSystemGenerator.generateSystem());
+            }}
+          >
+            <Dices />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Generate random celestial system</TooltipContent>
+      </Tooltip>
       <input
         ref={fileInputRef}
         className="hidden"
@@ -83,20 +88,34 @@ export default function CelestialBodyList() {
           if (newSystem !== null) setCelestialSystemRoot(newSystem);
         }}
       />
-      <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
-        <FileUp />
-      </Button>
-      <Button
-        variant="secondary"
-        onClick={() =>
-          downloadFile(
-            `planetary-system-${Date.now()}.json`,
-            JSON.stringify(celestialSystemRoot.export(), undefined, 2),
-          )
-        }
-      >
-        <FileDown />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <FileUp />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Import celestial system from file</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              downloadFile(
+                `planetary-system-${Date.now()}.json`,
+                JSON.stringify(celestialSystemRoot.export(), undefined, 2),
+              )
+            }
+          >
+            <FileDown />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Export celestial system to file</TooltipContent>
+      </Tooltip>
       <ul className="col-span-2 mt-2 h-full w-32 space-y-4 overflow-scroll">
         <li>
           <Button

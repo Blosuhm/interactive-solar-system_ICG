@@ -210,7 +210,7 @@ function RadiusEditor({ selectedBody }: SelectedBodyProp) {
           }}
           min={min}
           max={max}
-          step={1}
+          step={0.1}
         />
         <Input
           className="w-[9rem]"
