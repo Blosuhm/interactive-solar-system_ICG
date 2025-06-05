@@ -7,10 +7,10 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <CelestialSystemProvider>
-      <SelectedBodyProvider>
+    <SelectedBodyProvider>
+      <CelestialSystemProvider>
         <App />
-      </SelectedBodyProvider>
-    </CelestialSystemProvider>
+      </CelestialSystemProvider>
+    </SelectedBodyProvider>
   </StrictMode>,
 );

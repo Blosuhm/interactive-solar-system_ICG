@@ -9,7 +9,7 @@ type CelestialBodyConfig = {
   orbitalPeriod: CelestialBody["orbitalPeriod"];
   parent?: CelestialBody["parent"];
   lightSource?: CelestialBody["lightSource"];
-  color?: THREE.ColorRepresentation;
+  textureSrc?: string;
 };
 
 const SEGMENTS = 128;
@@ -56,6 +56,8 @@ export default class CelestialBody {
   private _isPaused: boolean | undefined;
   public readonly orbit: THREE.Object3D;
 
+  private static readonly loader = new THREE.TextureLoader();
+
   private readonly _satelliteSet = new Set<CelestialBody>();
 
   private readonly _bodyMaterial: THREE.MeshLambertMaterial;
@@ -70,7 +72,7 @@ export default class CelestialBody {
     name,
     distance,
     radius,
-    color = 0xffffff,
+    textureSrc,
     orbitalPeriod,
     lightSource = false,
     parent = null,
@@ -81,8 +83,7 @@ export default class CelestialBody {
 
     celestialBodyRecord.set(this.id, this);
 
-    // TODO: Figure out shadows and lighting
-    this._pointLight = new THREE.PointLight(color, 100, 0, 0);
+    this._pointLight = new THREE.PointLight(0xffffff, 5, 0, 0);
     this._pointLight.castShadow = true;
     this._pointLight.shadow.camera.near = 0.1;
     this._pointLight.shadow.camera.far = 10000;
@@ -95,7 +96,7 @@ export default class CelestialBody {
     this._radius = radius;
     this._radius_scale = 1 / this._radius;
     this._orbitalPeriod = orbitalPeriod;
-    this.color = new THREE.Color(color);
+    this.color = new THREE.Color(0xffffff);
     this._lightSource = lightSource;
     this._isPaused = parent === null ? undefined : false;
 
@@ -103,10 +104,17 @@ export default class CelestialBody {
 
     this.object = new THREE.Object3D();
 
+    const texture = CelestialBody.loader.load(
+      textureSrc ?? "4k_ceres_fictional.jpg",
+    );
+    texture.colorSpace = THREE.SRGBColorSpace;
+
     const sphereMaterial = new THREE.MeshLambertMaterial({
-      color: color,
-      emissive: lightSource ? color : 0x000000,
+      color: 0xffffff,
+      emissive: lightSource ? 0xffffff : 0x000000,
       shadowSide: THREE.FrontSide,
+      map: texture,
+      emissiveMap: texture,
     });
     this._bodyMaterial = sphereMaterial;
     const sphereGeometry = new THREE.SphereGeometry(
@@ -130,10 +138,11 @@ export default class CelestialBody {
     if (this._lightSource) {
       this.object.add(this._pointLight);
     }
-    this.object.userData.celestialBody = this;
 
     this.orbit = new THREE.Object3D();
     this.orbit.add(this.object);
+
+    this.body.userData.celestialBody = this;
 
     this._parent?.object.add(this.orbit);
 
@@ -219,7 +228,7 @@ export default class CelestialBody {
   public set lightSource(lightSource: boolean) {
     if (lightSource && !this._lightSource) {
       this.object.add(this._pointLight);
-      this._bodyMaterial.emissive = this.color;
+      this._bodyMaterial.emissive = new THREE.Color(0xffffff);
     } else if (!lightSource && this._lightSource) {
       this.object.remove(this._pointLight);
       this._bodyMaterial.emissive = new THREE.Color(0x000000);
@@ -256,9 +265,11 @@ export default class CelestialBody {
   }
 
   public set isPaused(isPaused) {
-    this.parent === null
-      ? (this._isPaused = isPaused)
-      : (this.parent.isPaused = isPaused);
+    if (this.parent === null) {
+      this._isPaused = isPaused;
+    } else {
+      this.parent.isPaused = isPaused;
+    }
   }
 
   private _addToSatelliteSet(celestialBody: CelestialBody) {
@@ -320,7 +331,7 @@ export default class CelestialBody {
     let json: unknown;
     try {
       json = JSON.parse(content);
-    } catch (e) {
+    } catch {
       console.error("parse error");
       return null;
     }
@@ -341,5 +352,11 @@ export default class CelestialBody {
     );
 
     return celestialSystem;
+  }
+
+  public set texture(texture: THREE.Texture) {
+    this._bodyMaterial.map = texture;
+    this._bodyMaterial.emissiveMap = texture;
+    this._bodyMaterial.needsUpdate = true;
   }
 }

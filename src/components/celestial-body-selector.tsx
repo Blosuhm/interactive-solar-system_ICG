@@ -1,6 +1,7 @@
 import { cn, downloadFile } from "@/lib/utils";
-import CelestialBody from "@/three/celestial-body";
+import CelestialBody, { celestialBodyRecord } from "@/three/celestial-body";
 import { SystemScene } from "@/three/init";
+import { RandomSystemGenerator } from "@/three/random-system-generator";
 import { Dices, FileDown, FileUp, Pause, Play, Plus } from "lucide-react";
 import { ComponentRef, useRef, useState } from "react";
 import { useCelestialSystem } from "./celestial-system-provider";
@@ -58,7 +59,15 @@ export default function CelestialBodyList() {
         </TooltipTrigger>
         <TooltipContent>{isPaused ? "Unpause" : "Pause"} System</TooltipContent>
       </Tooltip>
-      <Button type="button" size="icon" className="w-full">
+      <Button
+        type="button"
+        size="icon"
+        className="w-full"
+        onClick={() => {
+          celestialBodyRecord.clear();
+          setCelestialSystemRoot(RandomSystemGenerator.generateSystem());
+        }}
+      >
         <Dices />
       </Button>
       <input
@@ -69,6 +78,7 @@ export default function CelestialBodyList() {
           if (e.target.files === null || e.target.files.length === 0) return;
           const file = e.target.files[0];
           const content = await file.text();
+          celestialBodyRecord.clear();
           const newSystem = CelestialBody.import(content);
           if (newSystem !== null) setCelestialSystemRoot(newSystem);
         }}

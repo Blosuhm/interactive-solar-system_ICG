@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import CelestialBody from "./celestial-body";
-import { createSpectatorControls } from "./controls";
+import { createControls } from "./controls";
 import { sun } from "./solar-system";
 
 export type Animate = {
@@ -16,7 +16,7 @@ export class SystemScene {
   public readonly camera: THREE.PerspectiveCamera;
   public readonly scene: THREE.Scene;
   public readonly animate: Animate;
-  public readonly controls: ReturnType<typeof createSpectatorControls>;
+  public readonly controls: ReturnType<typeof createControls>;
 
   private _systemRoot: CelestialBody;
 
@@ -79,10 +79,7 @@ export class SystemScene {
     // });
 
     // Controls
-    this.controls = createSpectatorControls(
-      this.camera,
-      this.renderer.domElement,
-    );
+    this.controls = createControls(this.camera, this.renderer.domElement);
 
     // Animate
     this.animate = {

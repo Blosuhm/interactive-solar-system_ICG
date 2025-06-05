@@ -3,6 +3,7 @@ import CelestialBody, { celestialBodyRecord } from "@/three/celestial-body";
 import { SelectValue } from "@radix-ui/react-select";
 import { Pencil, PencilOff, Trash2 } from "lucide-react";
 import { ComponentRef, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { useCelestialSystem } from "./celestial-system-provider";
 import { useSelectedBody } from "./selected-body-provider";
 import { Button } from "./ui/button";
@@ -309,5 +310,42 @@ function PeriodEditor({ selectedBody }: SelectedBodyProp) {
   );
 }
 function TextureEditor({ selectedBody }: SelectedBodyProp) {
-  return <p>Texture Editor ({selectedBody.color.getHex()})</p>;
+  const fileInputRef = useRef<ComponentRef<"input">>(null);
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current === null) return;
+    fileInputRef.current.click(); // Trigger the hidden file input
+  };
+
+  return (
+    <div>
+      <p className="text-lg">Texture:</p>
+      <Button onClick={handleButtonClick}>Upload Image</Button>
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={(event) => {
+          if (event.target.files === null) return;
+          const file = event.target.files[0];
+          if (file !== null) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const image = new Image();
+              image.onload = function () {
+                const texture = new THREE.Texture(image);
+                texture.needsUpdate = true;
+                selectedBody.texture = texture;
+              };
+              if (e.target !== null && typeof e.target.result === "string") {
+                image.src = e.target.result;
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        }}
+      />
+    </div>
+  );
 }

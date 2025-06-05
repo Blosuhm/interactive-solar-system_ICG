@@ -31,7 +31,7 @@ export function SelectedBodyProvider({
 
   useEffect(() => {
     let isDragging = false;
-    let mouseDownPosition = { x: 0, y: 0 };
+    const mouseDownPosition = { x: 0, y: 0 };
     const dragThreshold = 5; // pixels
 
     const handleMouseDown = (event: MouseEvent) => {

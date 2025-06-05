@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useSelectedBody } from "./selected-body-provider";
 
 type CelestialSystemContext = {
   celestialSystem: CelestialBody[];
@@ -33,6 +34,8 @@ export function CelestialSystemProvider({
     SystemScene.instance.celestialSystemRoot.getCelestialSystem(),
   );
 
+  const { setSelectedBody } = useSelectedBody();
+
   const refreshCelestialSystem = useCallback(() => {
     setCelestialSystem(celestialSystemRoot.getCelestialSystem());
   }, [celestialSystemRoot, setCelestialSystem]);
@@ -40,6 +43,7 @@ export function CelestialSystemProvider({
   useEffect(() => {
     refreshCelestialSystem();
     SystemScene.instance.celestialSystemRoot = celestialSystemRoot;
+    setSelectedBody(celestialSystemRoot);
   }, [celestialSystemRoot, refreshCelestialSystem]);
 
   return (
